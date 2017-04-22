@@ -1,4 +1,4 @@
-HC = require 'HC'
+Hardon = require 'HC'
 
 --array to hold rectangle information
 arr_rectangles = {}
@@ -23,6 +23,11 @@ bottom_most_rect = {}
 first_rectangle = {}
 first_hitbox = {}
 
+mouse = Hardon.circle(400, 300, 20)
+mouse:moveTo(love.mouse.getPosition())
+
+there_are_collisions = false
+
 function love.load()
 
 	love.graphics.setBackgroundColor(50, 50, 50)
@@ -35,11 +40,7 @@ function love.load()
 	first_rectangle["width"] = RECT_SIDE
 	first_rectangle["height"] = RECT_SIDE
 
-	first_hitbox = {}
-	first_hitbox["x"] = first_rectangle["x"]
-	first_hitbox["y"] = first_rectangle["y"]
-	first_hitbox["width"] = first_rectangle["width"]
-	first_hitbox["height"] = first_rectangle["height"]
+	first_hitbox = Hardon.rectangle(first_rectangle["x"], first_rectangle["y"], RECT_SIDE, RECT_SIDE)
 
 	open_adjacent_spots = {{first_rectangle["x"] + RECT_SIDE + RECT_OFFSET, first_rectangle["y"]}, {first_rectangle["x"] - (RECT_SIDE + RECT_OFFSET), first_rectangle["y"]}, {first_rectangle["x"], first_rectangle["y"] + RECT_SIDE + RECT_OFFSET}, {first_rectangle["x"], first_rectangle["y"] - (RECT_SIDE + RECT_OFFSET)}}
 
@@ -61,6 +62,9 @@ function love.load()
 	left_most_rect = first_rectangle
 	bottom_most_rect = first_rectangle
 
+	table.insert(arr_rectangles, first_rectangle)
+	table.insert(arr_hitboxes, first_hitbox)
+
 	
 	i = 2
 	while i <= MAX_RECTS do
@@ -77,12 +81,7 @@ function love.load()
 		new_rectangle["width"] = RECT_SIDE
 		new_rectangle["height"] = RECT_SIDE
 
-		new_hitbox = {}
-
-		new_hitbox["x"] = new_rectangle["x"]
-		new_hitbox["y"] = new_rectangle["y"]
-		new_hitbox["width"] = new_rectangle["width"]
-		new_hitbox["height"] = new_rectangle["height"]
+		new_hitbox = Hardon.rectangle(new_rectangle["x"], new_rectangle["y"], RECT_SIDE, RECT_SIDE)
 
 
 		x_axis = new_rectangle["x"]
@@ -118,6 +117,15 @@ end
 end
 
 function love.update(dt)
+	--Check for collisions when the mouse is down
+	there_are_collisions = false
+	if love.mouse.isDown(1) then
+		for shape, delta in pairs(Hardon.collisions(mouse)) do
+			there_are_collisions = true
+			break
+		end
+
+	end
 end
 
 function love.draw(dt)
@@ -128,8 +136,11 @@ function love.draw(dt)
 		OFFSET_Y = OFFSET_Y * -1 
 	end
 
+	if(there_are_collisions) then
+		love.graphics.print("THERE ARE COLLISIONS YA BITCH!!!!!!", 10, 10)
+	end
+
     for i, v in ipairs(arr_rectangles) do
-    	love.graphics.print(v["x"] - OFFSET_X .. ", " .. v["y"] + OFFSET_Y, 10, i * 15)
     	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] + OFFSET_Y, v["width"], v["height"], 20, 20)
     end
 end
