@@ -44,7 +44,7 @@ function love.load()
 	open_adjacent_spots = {{first_rectangle["x"] + RECT_SIDE + RECT_OFFSET, first_rectangle["y"]}, {first_rectangle["x"] - (RECT_SIDE + RECT_OFFSET), first_rectangle["y"]}, {first_rectangle["x"], first_rectangle["y"] + RECT_SIDE + RECT_OFFSET}, {first_rectangle["x"], first_rectangle["y"] - (RECT_SIDE + RECT_OFFSET)}}
 
 	x = first_rectangle["x"] - math.floor(WINDOW_WIDTH/RECT_SIDE)
-	y = first_rectangle["y"] - math.floor(WINDOW_WIDTH/RECT_SIDE)
+	y = first_rectangle["y"] - math.floor(WINDOW_HEIGHT/RECT_SIDE)
 
 	--Create a map for occupied areas
 	occupied_map = {}
@@ -68,6 +68,9 @@ function love.load()
 		math.randomseed(os.time())
 		open_index = math.random(table.getn(open_adjacent_spots))
 
+		if occupied_map[open_adjacent_spots[open_index][1] .. "," .. open_adjacent_spots[open_index][2]] then
+				table.remove(open_adjacent_spots, open_index)
+	else
 		new_rectangle = {}
 		new_rectangle["x"] = open_adjacent_spots[open_index][1]
 		new_rectangle["y"] = open_adjacent_spots[open_index][2]
@@ -88,18 +91,10 @@ function love.load()
 		first_x = first_rectangle["x"]
 		first_y = first_rectangle["y"]
 
-		if not (x_axis  == first_x - WINDOW_WIDTH/RECT_SIDE) and not (occupied_map[(x_axis - (RECT_SIDE + RECT_OFFSET)) .. "," .. y_axis]) then
 			table.insert(open_adjacent_spots, {new_rectangle["x"] - (RECT_SIDE + RECT_OFFSET), new_rectangle["y"]})
-		end
-		if not (x_axis  == first_x + WINDOW_WIDTH/RECT_SIDE) and not (occupied_map[(x_axis + (RECT_SIDE + RECT_OFFSET)) .. "," .. y_axis]) then
 			table.insert(open_adjacent_spots, {new_rectangle["x"] + RECT_SIDE + RECT_OFFSET, new_rectangle["y"]})
-		end
-		if not (y_axis  == first_y - WINDOW_WIDTH/RECT_SIDE) and not (occupied_map[x_axis .. "," .. (y_axis - (RECT_SIDE + RECT_OFFSET))]) then
 			table.insert(open_adjacent_spots, {new_rectangle["x"], new_rectangle["y"] - (RECT_SIDE + RECT_OFFSET)})
-		end
-		if not (y_axis  == first_y + WINDOW_WIDTH/RECT_SIDE) and not (occupied_map[x_axis .. "," .. (y_axis + (RECT_SIDE + RECT_OFFSET))]) then
 			table.insert(open_adjacent_spots, {new_rectangle["x"], new_rectangle["y"] + RECT_SIDE + RECT_OFFSET})
-		end
 
 
 		occupied_map[new_rectangle["x"] .. "," .. new_rectangle["y"]] = true
@@ -119,6 +114,7 @@ function love.load()
 
 		i = i + 1
 	end
+end
 end
 
 function love.update(dt)
