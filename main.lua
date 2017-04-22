@@ -132,6 +132,7 @@ end
 
 function love.update(dt)
 	--Check for collisions when the mouse is down
+	mouse:moveTo(love.mouse.getPosition())
 	there_are_collisions = false
 	if love.mouse.isDown(1) then
 		for shape, delta in pairs(Hardon.collisions(mouse)) do
