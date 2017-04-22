@@ -11,6 +11,7 @@ WINDOW_WIDTH = 650
 WINDOW_HEIGHT = 700
 
 RECT_SIDE = WINDOW_WIDTH/10
+
 RECT_OFFSET = 10.0
 
 MAX_RECTS_ACROSS = MAX_RECTS/2
@@ -29,8 +30,8 @@ function love.load()
 	math.randomseed(os.time())
 	--initialize all the rectangles and their hitboxes
 	first_rectangle = {}
-	first_rectangle["x"] = math.random(MAX_RECTS)
-	first_rectangle["y"] = math.random(MAX_RECTS)
+	first_rectangle["x"] = math.random(WINDOW_WIDTH / RECT_SIDE)
+	first_rectangle["y"] = math.random(WINDOW_HEIGHT / RECT_SIDE)
 	first_rectangle["width"] = RECT_SIDE
 	first_rectangle["height"] = RECT_SIDE
 
@@ -42,13 +43,13 @@ function love.load()
 
 	open_adjacent_spots = {{first_rectangle["x"] + RECT_SIDE + RECT_OFFSET, first_rectangle["y"]}, {first_rectangle["x"] - (RECT_SIDE + RECT_OFFSET), first_rectangle["y"]}, {first_rectangle["x"], first_rectangle["y"] + RECT_SIDE + RECT_OFFSET}, {first_rectangle["x"], first_rectangle["y"] - (RECT_SIDE + RECT_OFFSET)}}
 
-	x = first_rectangle["x"] - math.floor(MAX_RECTS/2)
-	y = first_rectangle["y"] - math.floor(MAX_RECTS/2)
+	x = first_rectangle["x"] - math.floor(WINDOW_WIDTH/RECT_SIDE)
+	y = first_rectangle["y"] - math.floor(WINDOW_WIDTH/RECT_SIDE)
 
 	--Create a map for occupied areas
 	occupied_map = {}
-	while x < first_rectangle["x"] + math.floor(MAX_RECTS/2) do
-		while y < first_rectangle["y"] + math.floor(MAX_RECTS/2) do
+	while x < first_rectangle["x"] + math.floor(WINDOW_WIDTH/RECT_SIDE) do
+		while y < first_rectangle["y"] + math.floor(WINDOW_HEIGHT/RECT_SIDE) do
 			occupied_map[x .. "," .. y] = false 
 			y = y + RECT_SIDE + RECT_OFFSET
 		end
@@ -81,10 +82,25 @@ function love.load()
 		new_hitbox["height"] = new_rectangle["height"]
 
 
-		table.insert(open_adjacent_spots, {new_rectangle["x"] - (RECT_SIDE + RECT_OFFSET), new_rectangle["y"]})
-		table.insert(open_adjacent_spots, {new_rectangle["x"] + RECT_SIDE + RECT_OFFSET, new_rectangle["y"]})
-		table.insert(open_adjacent_spots, {new_rectangle["x"], new_rectangle["y"] - (RECT_SIDE + RECT_OFFSET)})
-		table.insert(open_adjacent_spots, {new_rectangle["x"], new_rectangle["y"] + RECT_SIDE + RECT_OFFSET})
+		x_axis = new_rectangle["x"]
+		y_axis = new_rectangle["y"]
+
+		first_x = first_rectangle["x"]
+		first_y = first_rectangle["y"]
+
+		if not (x_axis  == first_x - WINDOW_WIDTH/RECT_SIDE) and not (occupied_map[(x_axis - (RECT_SIDE + RECT_OFFSET)) .. "," .. y_axis]) then
+			table.insert(open_adjacent_spots, {new_rectangle["x"] - (RECT_SIDE + RECT_OFFSET), new_rectangle["y"]})
+		end
+		if not (x_axis  == first_x + WINDOW_WIDTH/RECT_SIDE) and not (occupied_map[(x_axis + (RECT_SIDE + RECT_OFFSET)) .. "," .. y_axis]) then
+			table.insert(open_adjacent_spots, {new_rectangle["x"] + RECT_SIDE + RECT_OFFSET, new_rectangle["y"]})
+		end
+		if not (y_axis  == first_y - WINDOW_WIDTH/RECT_SIDE) and not (occupied_map[x_axis .. "," .. (y_axis - (RECT_SIDE + RECT_OFFSET))]) then
+			table.insert(open_adjacent_spots, {new_rectangle["x"], new_rectangle["y"] - (RECT_SIDE + RECT_OFFSET)})
+		end
+		if not (y_axis  == first_y + WINDOW_WIDTH/RECT_SIDE) and not (occupied_map[x_axis .. "," .. (y_axis + (RECT_SIDE + RECT_OFFSET))]) then
+			table.insert(open_adjacent_spots, {new_rectangle["x"], new_rectangle["y"] + RECT_SIDE + RECT_OFFSET})
+		end
+
 
 		occupied_map[new_rectangle["x"] .. "," .. new_rectangle["y"]] = true
 
@@ -103,7 +119,6 @@ function love.load()
 
 		i = i + 1
 	end
-
 end
 
 function love.update(dt)
@@ -111,10 +126,14 @@ end
 
 function love.draw(dt)
 	OFFSET_X = left_most_rect["x"]
-	OFFSET_Y = -1*bottom_most_rect["x"]
+	OFFSET_Y = bottom_most_rect["y"]
+
+	if OFFSET_Y < 0 then 
+		OFFSET_Y = OFFSET_Y * -1 
+	end
 
     for i, v in ipairs(arr_rectangles) do
     	love.graphics.print(v["x"] - OFFSET_X .. ", " .. v["y"] + OFFSET_Y, 10, i * 15)
-    	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] - OFFSET_Y, v["width"], v["height"], 20, 20)
+    	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] + OFFSET_Y, v["width"], v["height"], 20, 20)
     end
 end
