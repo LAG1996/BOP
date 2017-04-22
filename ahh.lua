@@ -4,18 +4,11 @@ Hardon = require 'HC'
 arr_rectangles = {}
 --array to hold rectangle hitbox information
 arr_hitboxes = {}
---Checking
-color = {}
-color[1] = {0, 0, 255}
-color[2] = {255, 0, 0}
-color[3] = {0, 255, 0}
-
-box2rect = {}
 
 MAX_RECTS = 49
 
 WINDOW_WIDTH = 650
-WINDOW_HEIGHT = 701
+WINDOW_HEIGHT = 700
 
 RECT_SIDE = WINDOW_WIDTH/10
 
@@ -30,10 +23,11 @@ bottom_most_rect = {}
 first_rectangle = {}
 first_hitbox = {}
 
-mouse = Hardon.circle(400, 300, 20)
+mouse = Hardon.circle(400, 300, 5)
 mouse:moveTo(love.mouse.getPosition())
 
 there_are_collisions = false
+collisions = 0
 
 function love.load()
 
@@ -46,9 +40,6 @@ function love.load()
 	first_rectangle["y"] = math.random(WINDOW_HEIGHT / RECT_SIDE)
 	first_rectangle["width"] = RECT_SIDE
 	first_rectangle["height"] = RECT_SIDE
-	math.randomseed(os.time())
-	first_rectangle["color"] = color[math.random(3)]
-
 
 	open_adjacent_spots = {{first_rectangle["x"] + RECT_SIDE + RECT_OFFSET, first_rectangle["y"]}, {first_rectangle["x"] - (RECT_SIDE + RECT_OFFSET), first_rectangle["y"]}, {first_rectangle["x"], first_rectangle["y"] + RECT_SIDE + RECT_OFFSET}, {first_rectangle["x"], first_rectangle["y"] - (RECT_SIDE + RECT_OFFSET)}}
 
@@ -71,6 +62,7 @@ function love.load()
 	bottom_most_rect = first_rectangle
 
 	table.insert(arr_rectangles, first_rectangle)
+
 	
 	i = 2
 	while i <= MAX_RECTS do
@@ -86,8 +78,6 @@ function love.load()
 		new_rectangle["y"] = open_adjacent_spots[open_index][2]
 		new_rectangle["width"] = RECT_SIDE
 		new_rectangle["height"] = RECT_SIDE
-		math.randomseed(os.time())
-		new_rectangle["color"] = color[math.random(3)]
 
 
 		x_axis = new_rectangle["x"]
@@ -115,6 +105,7 @@ function love.load()
 		table.remove(open_adjacent_spots, open_index) --remove this open index so that it's not considered again
 
 		table.insert(arr_rectangles, new_rectangle)
+
 		i = i + 1
 	end
 end
@@ -126,17 +117,18 @@ end
 	
 	for i, rect in ipairs(arr_rectangles) do
 		new_hitbox = Hardon.rectangle(rect["x"] - OFFSET_X, rect["y"] + OFFSET_Y, RECT_SIDE, RECT_SIDE)
-		box2rect[new_hitbox] = rect
+		table.insert(arr_hitboxes, new_hitbox)
 	end
 end
 
 function love.update(dt)
 	--Check for collisions when the mouse is down
+	mouse:moveTo(love.mouse.getPosition())
 	there_are_collisions = false
+
 	if love.mouse.isDown(1) then
 		for shape, delta in pairs(Hardon.collisions(mouse)) do
 			there_are_collisions = true
-			break
 		end
 	end
 end
@@ -145,25 +137,17 @@ function love.draw(dt)
 	OFFSET_X = left_most_rect["x"]
 	OFFSET_Y = bottom_most_rect["y"]
 
-
 	if OFFSET_Y < 0 then 
 		OFFSET_Y = OFFSET_Y * -1 
 	end
 
-	if(there_are_collisions) then
+	if there_are_collisions  then
 		love.graphics.print("THERE ARE COLLISIONS YA BITCH!!!!!!", 10, 10)
 	end
-	
+
     for i, v in ipairs(arr_rectangles) do
-    	--love.graphics.print(v["color"][1].. "," .. v["color"][2].. ", " .. v["color"][3], 10, i*15)
-    	--love.graphics.setColor(v["color"][1], v["color"][2], v["color"][3], math.random(255))
     	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] + OFFSET_Y, v["width"], v["height"], 20, 20)
     end
 
-    i = 0
-    for a, b in ipairs(box2rect) do
-    	love.graphics.print("why", 10, i * 15)
-    	a:draw('fill')
-    	i = i + 1
-    end
+    there_are_collisions = false
 end
