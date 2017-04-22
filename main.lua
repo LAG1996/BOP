@@ -37,6 +37,7 @@ there_are_collisions = false
 
 function love.load()
 
+	my_color = 1
 	love.graphics.setBackgroundColor(50, 50, 50)
 	--create a random seed
 	math.randomseed(os.time())
@@ -47,7 +48,9 @@ function love.load()
 	first_rectangle["width"] = RECT_SIDE
 	first_rectangle["height"] = RECT_SIDE
 	math.randomseed(os.time())
-	first_rectangle["color"] = color[math.random(3)]
+	first_rectangle["color"] = my_color
+
+	my_color = my_color + 1
 
 
 	open_adjacent_spots = {{first_rectangle["x"] + RECT_SIDE + RECT_OFFSET, first_rectangle["y"]}, {first_rectangle["x"] - (RECT_SIDE + RECT_OFFSET), first_rectangle["y"]}, {first_rectangle["x"], first_rectangle["y"] + RECT_SIDE + RECT_OFFSET}, {first_rectangle["x"], first_rectangle["y"] - (RECT_SIDE + RECT_OFFSET)}}
@@ -87,7 +90,13 @@ function love.load()
 		new_rectangle["width"] = RECT_SIDE
 		new_rectangle["height"] = RECT_SIDE
 		math.randomseed(os.time())
-		new_rectangle["color"] = color[math.random(3)]
+		new_rectangle["color"] = my_color
+
+		my_color = my_color + 1
+
+		if my_color == 4 then
+			my_color = 1
+		end
 
 
 		x_axis = new_rectangle["x"]
@@ -157,14 +166,7 @@ function love.draw(dt)
 	
     for i, v in ipairs(arr_rectangles) do
     	--love.graphics.print(v["color"][1].. "," .. v["color"][2].. ", " .. v["color"][3], 10, i*15)
-    	--love.graphics.setColor(v["color"][1], v["color"][2], v["color"][3], math.random(255))
+    	love.graphics.setColor(color[v["color"]][1], color[v["color"]][2], color[v["color"]][3])
     	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] + OFFSET_Y, v["width"], v["height"], 20, 20)
-    end
-
-    i = 0
-    for a, b in ipairs(box2rect) do
-    	love.graphics.print("why", 10, i * 15)
-    	a:draw('fill')
-    	i = i + 1
     end
 end
