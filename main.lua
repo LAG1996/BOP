@@ -4,11 +4,18 @@ Hardon = require 'HC'
 arr_rectangles = {}
 --array to hold rectangle hitbox information
 arr_hitboxes = {}
+--Checking
+color = {}
+color[1] = {0, 0, 255}
+color[2] = {255, 0, 0}
+color[3] = {0, 255, 0}
+
+box2rect = {}
 
 MAX_RECTS = 49
 
 WINDOW_WIDTH = 650
-WINDOW_HEIGHT = 700
+WINDOW_HEIGHT = 701
 
 RECT_SIDE = WINDOW_WIDTH/10
 
@@ -39,6 +46,8 @@ function love.load()
 	first_rectangle["y"] = math.random(WINDOW_HEIGHT / RECT_SIDE)
 	first_rectangle["width"] = RECT_SIDE
 	first_rectangle["height"] = RECT_SIDE
+	math.randomseed(os.time())
+	first_rectangle["color"] = color[math.random(3)]
 
 	first_hitbox = Hardon.rectangle(first_rectangle["x"], first_rectangle["y"], RECT_SIDE, RECT_SIDE)
 
@@ -64,7 +73,7 @@ function love.load()
 
 	table.insert(arr_rectangles, first_rectangle)
 	table.insert(arr_hitboxes, first_hitbox)
-
+	box2rect[first_hitbox] = first_rectangle 
 	
 	i = 2
 	while i <= MAX_RECTS do
@@ -80,7 +89,9 @@ function love.load()
 		new_rectangle["y"] = open_adjacent_spots[open_index][2]
 		new_rectangle["width"] = RECT_SIDE
 		new_rectangle["height"] = RECT_SIDE
-
+		math.randomseed(os.time())
+		new_rectangle["color"] = color[math.random(3)]
+		love.graphics.print(new_rectangle["color"][1] .. ", " .. new_rectangle["color"][2] .. ", " .. new_rectangle["color"][3], 10, i * 15)
 		new_hitbox = Hardon.rectangle(new_rectangle["x"], new_rectangle["y"], RECT_SIDE, RECT_SIDE)
 
 
@@ -110,7 +121,7 @@ function love.load()
 
 		table.insert(arr_rectangles, new_rectangle)
 		table.insert(arr_hitboxes, new_hitbox)
-
+		box2rect[new_hitbox] = new_rectangle
 		i = i + 1
 	end
 end
@@ -132,6 +143,7 @@ function love.draw(dt)
 	OFFSET_X = left_most_rect["x"]
 	OFFSET_Y = bottom_most_rect["y"]
 
+
 	if OFFSET_Y < 0 then 
 		OFFSET_Y = OFFSET_Y * -1 
 	end
@@ -139,8 +151,11 @@ function love.draw(dt)
 	if(there_are_collisions) then
 		love.graphics.print("THERE ARE COLLISIONS YA BITCH!!!!!!", 10, 10)
 	end
-
+	
     for i, v in ipairs(arr_rectangles) do
+    	--love.graphics.print(v["color"][1].. "," .. v["color"][2].. ", " .. v["color"][3], 10, i*15)
+    	love.graphics.setColor(v["color"][1], v["color"][2], v["color"][3], math.random(255))
     	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] + OFFSET_Y, v["width"], v["height"], 20, 20)
+
     end
 end
