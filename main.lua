@@ -256,7 +256,13 @@ function _ChangeColor()
    		changeColorCount = 0
    		difficultyIncreaseButtonPressed = love.window.showMessageBox(difficultyIncreaseTitle, difficultyIncreaseMessage, difficultyIncreaseButtons)
    		if(difficultyIncreaseButtonPressed==1) then
-			MAX_RECTS = 70
+			MAX_RECTS = MAX_RECTS * 3
+			--RECT_SIDE = RECT_SIDE / 2
+			--RECT_OFFSET = RECT_OFFSET / 2
+			--WINDOW_WIDTH = WINDOW_WIDTH * 2
+			--WINDOW_HEIGHT = WINDOW_HEIGHT * 2
+			-- This won't clear the objects ( Since they are globally defined, will have to re-initialize)
+			love.graphics.clear()
 			love.load()
 		elseif (difficultyIncreaseButtonPressed==2) then
 			-- No
