@@ -26,7 +26,7 @@ function love.update(dt)
     end
 
     while #text > 40 do
-        table.remove(text, 1)
+         table.remove(text, 1)
     end
 end
 

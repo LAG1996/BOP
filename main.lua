@@ -1,5 +1,12 @@
 Hardon = require 'HC'
 
+--environment sprites
+enviroPics = { 
+	love.graphics.newImage("images/city.png"),
+	love.graphics.newImage("images/forest.png"),
+	love.graphics.newImage("images/ocean.png"),
+	love.graphics.newImage("images/sky.png")}
+
 --array to hold rectangle information
 arr_rectangles = {}
 --array to hold rectangle hitbox information
@@ -10,12 +17,14 @@ color[1] = {0, 0, 255}
 color[2] = {255, 0, 0}
 color[3] = {0, 255, 0}
 
+lastRecordedRectColor = {}
+
 box2rect = {}
 
 MAX_RECTS = 49
 
-WINDOW_WIDTH = 650
-WINDOW_HEIGHT = 701
+WINDOW_WIDTH = 1024
+WINDOW_HEIGHT = 720
 
 RECT_SIDE = WINDOW_WIDTH/10
 
@@ -36,9 +45,9 @@ mouse:moveTo(love.mouse.getPosition())
 there_are_collisions = false
 
 function love.load()
-
 	my_color = 1
 	love.graphics.setBackgroundColor(50, 50, 50)
+	love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT, {fullscreen = true})
 	--create a random seed
 	math.randomseed(os.time())
 	--initialize all the rectangles and their hitboxes
@@ -49,6 +58,7 @@ function love.load()
 	first_rectangle["height"] = RECT_SIDE
 	math.randomseed(os.time())
 	first_rectangle["color"] = my_color
+	first_rectangle["neighbors"] = {}
 
 	my_color = my_color + 1
 
@@ -91,6 +101,26 @@ function love.load()
 		new_rectangle["height"] = RECT_SIDE
 		math.randomseed(os.time())
 		new_rectangle["color"] = my_color
+
+		--Set adjacent neighbors
+		new_rectangle["neighbors"] = {}
+		--Look at all nodes up, down, left, and right in the occupied_map
+		if occupied_map[new_rectangle["x"] + 1 .. "," .. new_rectangle["y"]] then
+			table.insert(new_rectangle["neighbors"], occupied_map[new_rectangle["x"] + 1 .. "," .. new_rectangle["y"]])
+			table.insert(occupied_map[new_rectangle["x"] + 1 .. "," .. new_rectangle["y"]], new_rectangle)
+		end
+		if occupied_map[new_rectangle["x"] - 1 .. "," .. new_rectangle["y"]] then
+			table.insert(new_rectangle["neighbors"], occupied_map[new_rectangle["x"] - 1 .. "," .. new_rectangle["y"]])
+			table.insert(occupied_map[new_rectangle["x"] - 1 .. "," .. new_rectangle["y"]], new_rectangle)
+		end
+		if occupied_map[new_rectangle["x"] .. "," .. new_rectangle["y"] + 1] then
+			table.insert(new_rectangle["neighbors"], occupied_map[new_rectangle["x"].. "," .. new_rectangle["y"] + 1])
+			table.insert(occupied_map[new_rectangle["x"] .. "," .. new_rectangle["y"] + 1], new_rectangle)
+		end
+		if occupied_map[new_rectangle["x"] .. "," .. new_rectangle["y"] - 1] then
+			table.insert(new_rectangle["neighbors"], occupied_map[new_rectangle["x"] .. "," .. new_rectangle["y"] - 1])
+			table.insert(occupied_map[new_rectangle["x"] .. "," .. new_rectangle["y"] - 1], new_rectangle)
+		end
 
 		my_color = my_color + 1
 
@@ -136,10 +166,20 @@ end
 	for i, rect in ipairs(arr_rectangles) do
 		new_hitbox = Hardon.rectangle(rect["x"] - OFFSET_X, rect["y"] + OFFSET_Y, RECT_SIDE, RECT_SIDE)
 		box2rect[new_hitbox] = rect
+		lastRecordedRectColor[rect] = rect["color"]
 	end
 end
 
 function love.update(dt)
+	for i , rect in pairs(arr_rectangles) do
+		neighbors = rect["neighbors"]
+		for i, N in pairs(neighbors) do
+			if N["color"] ~= lastRecordedRectColor[N] then
+				_HandleNewColor(rect, N)
+			end
+		end
+	end
+
 	--Check for collisions when the mouse is down
 	mouse:moveTo(love.mouse.getPosition())
 	there_are_collisions = false
@@ -149,27 +189,47 @@ function love.update(dt)
 			break
 		end
 	end
+
+	if love.keyboard.isDown("escape") then
+		love.window.close()
+	end
 end
 
 function love.draw(dt)
 	OFFSET_X = left_most_rect["x"]
 	OFFSET_Y = bottom_most_rect["y"]
 
-
 	if OFFSET_Y < 0 then 
 		OFFSET_Y = OFFSET_Y * -1 
 	end
 
-	if(there_are_collisions) then
-		love.graphics.print("THERE ARE COLLISIONS YA BITCH!!!!!!", 10, 10)
-	end
-	
+
     for i, v in ipairs(arr_rectangles) do
-    	--love.graphics.print(v["color"][1].. "," .. v["color"][2].. ", " .. v["color"][3], 10, i*15)
     	love.graphics.setColor(color[v["color"]][1], color[v["color"]][2], color[v["color"]][3])
     	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] + OFFSET_Y, v["width"], v["height"], 20, 20)
     end
 
     love.graphics.setColor(0,0,0)
     mouse:draw('fill')
+end
+
+function _HandleNewColor(rect_1, rect_2)
+	if rect_1["color"] == rect_2["color"] then
+		--Lower the score multiplier
+		--Unless...
+
+	else
+		for i, N in ipairs(rect_1["color"]) do
+			if N["x"] ~= rect_2["x"] or N["y"] ~= rect_2["y"] then
+				if rect_1 ~= N["color"] then
+					--Increment the score multiplier to reward a
+					--chain of three non-similar nodes
+			end
+
+			lastRecordedRectColor[N] = N["color"] --Update the last recorded color for this node			
+		end
+	end
+
+	lastRecordedRectColor[rect_1] = rect_1["color"] --Update this rectangle's last recorded color
+	lastRecordedRectColor[rect_2] = rect_2["color"] --Update this rectangle's last recorded color
 end
