@@ -39,6 +39,8 @@ mouse:moveTo(love.mouse.getPosition())
 
 there_are_collisions = false
 
+clicked_box = nil
+
 function love.load()
 
 	my_color = 1
@@ -147,10 +149,12 @@ function love.update(dt)
 	--Check for collisions when the mouse is down
 	mouse:moveTo(love.mouse.getPosition())
 	there_are_collisions = false
+	clicked_box = nil
 	if love.mouse.isDown(1) then
 		for shape, delta in pairs(Hardon.collisions(mouse)) do
 			mouseXPosition,mouseYPosition = love.mouse.getPosition()
 			there_are_collisions = true
+			clicked_box = shape
 			break
 		end
 	end
@@ -167,8 +171,16 @@ function love.draw(dt)
 
 	if(there_are_collisions) then
 		--love.graphics.print(table.getn(mouseXPosition)..table.getn(mouseYPosition)..mouseYPosition[1])
-		love.graphics.print(type(mouseXPosition)..type(mouseYPosition)..mouseXPosition..mouseYPosition)
-		love.graphics.print("THERE ARE COLLISIONS YA BITCH!!!!!!", 10, 10)
+		love.graphics.print(box2rect[clicked_box]["x"] - OFFSET_X ..","..box2rect[clicked_box]["y"] + OFFSET_Y..","..box2rect[clicked_box]["color"].."\n", 10, 10)
+		tempColor = box2rect[clicked_box]["color"] + 1;
+		if(tempColor == 4 ) then
+			tempColor=1;
+		end
+		box2rect[clicked_box]["color"] = tempColor;
+		love.graphics.setColor(color[box2rect[clicked_box]["color"]][1], color[box2rect[clicked_box]["color"]][2], color[box2rect[clicked_box]["color"]][3])
+    	love.graphics.rectangle("fill", box2rect[clicked_box]["x"] - OFFSET_X, box2rect[clicked_box]["y"] + OFFSET_Y, box2rect[clicked_box]["width"], box2rect[clicked_box]["height"], 20, 20)
+		--love.graphics.print(type(mouseXPosition)..type(mouseYPosition)..mouseXPosition..mouseYPosition.."\n", 500,10)
+		--love.graphics.print("THERE ARE COLLISIONS YA BITCH!!!!!!", 10, 10)
 	end
 	
     for i, v in ipairs(arr_rectangles) do
