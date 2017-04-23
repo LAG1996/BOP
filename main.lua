@@ -44,7 +44,7 @@ RECT_SIDE = WINDOW_WIDTH/10 --Size of a box
 
 MAX_RECTS = 50
 
-RECT_OFFSET = 1.8 --The offset between the boxes
+RECT_OFFSET = 1 --The offset between the boxes
 
 WINDOW_TOP_AREA_HEIGHT = 200 --An offset so that we have space to put a UI
 
@@ -103,7 +103,7 @@ math.randomseed(os.time())
 
 function love.load()
 	my_color = 1
-	love.graphics.setBackgroundColor(50, 50, 50)
+	love.graphics.setBackgroundColor(200, 135, 82)
 	love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT, {fullscreen = true})
 
 	--create a random seed
@@ -424,7 +424,7 @@ function Computer_Change()
 	math.random()
 	node_to_change = arr_hitboxes[math.random(MAX_RECTS)]
 
-		cur_pick = node_to_change
+	cur_pick = node_to_change
 
 	tempColor = box2rect[node_to_change]["color"]
 	sign = 0
