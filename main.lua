@@ -8,6 +8,11 @@ board_pieces = {
 	love.graphics.newImage("images/placepieces/shadow.png")
 }
 
+player_click = love.audio.newSource("sounds/doorhclick.wav")
+player_click:setVolume(2.0)
+comp_click = love.audio.newSource("sounds/doorhclick.wav")
+comp_click:setPitch(0.5)
+
 color_names = {"red", "green", "yellow"}
 
 brushaff = "fonts/Brushaff.ttf"
@@ -76,8 +81,8 @@ difficultyIncreaseMessage = "The humans need to stop destroying EARTH.          
 changeColorCount = 0
 difficultyIncreaseButtons = {"OK", "No!", "Help", escapebutton = 2}
 
-table_dimensions_x = 25
-table_dimensions_y = 25
+table_dimensions_x = 20
+table_dimensions_y = 20
 
 biomes = {"industry", "woodland", "ocean", "atmosphere"}
 
@@ -93,12 +98,15 @@ camera = {0, 0}
 camera_speed = 250
 
 first_computer_action = true
-computer_action_interval = 15.0
+computer_action_interval = 6.0
 computer_acted = false
 prompt_timer = 5.0
 cur_pick = nil
 
-seed = 123213213232
+current_background_color = {200, 135, 82}
+player_turn = true
+computer_think_time = 0
+
 math.randomseed(os.time())
 
 function love.load()
@@ -254,19 +262,19 @@ end
 --Given an X and Y, tell me the biome I'm in
 function GetBiome(x, y)
 	
-	if x <= table_dimensions_x / 2 and y >= table_dimensions_y / 2 then
+	if x <= table_dimensions_x * piece_size * piece_scale / 2 and y >= table_dimensions_y * piece_size * piece_scale / 2 then
 		return "Industry"
 	end
 
-	if x > table_dimensions_x / 2 and y > table_dimensions_y / 2 then
+	if x > table_dimensions_x * piece_size * piece_scale / 2 and y > table_dimensions_y * piece_size * piece_scale/ 2 then
 		return "Forest"
 	end
 
-	if x <= table_dimensions_x / 2 and y <= table_dimensions_y /2 then
+	if x <= table_dimensions_x* piece_size * piece_scale / 2 and y <= table_dimensions_y* piece_size * piece_scale /2 then
 		return "Sky"
 	end
 
-	if x > table_dimensions_x / 2 and y < table_dimensions_y/2 then
+	if x > table_dimensions_x* piece_size * piece_scale / 2 and y < table_dimensions_y* piece_size * piece_scale/2 then
 		return "Ocean"
 	end
 
@@ -326,24 +334,17 @@ function love.update(dt)
 		delay_timer = delay_timer + 1
 	end
 
-	computer_action_interval = computer_action_interval - dt
-
-	if prompt_timer > 0 then
-		prompt_timer = prompt_timer - dt
-	else
-		computer_acted = false
+	if computer_think_time < 2.0 then
+		computer_think_time = computer_think_time + dt
 	end
 
---[[
-	if computer_action_interval <= 0 then
+	if not player_turn and computer_think_time >= 2.0 then
 		Computer_Change()
 	end
-]]--
-	Computer_Change()
 end
 
 function love.draw(dt)
-	if there_are_collisions and delay_timer == 0 then
+	if there_are_collisions and delay_timer == 0 and box2rect[clicked_box]["color"] ~= 4 and player_turn then
 		_ChangeColor()
 	end
 
@@ -353,21 +354,11 @@ function love.draw(dt)
     end
 
     if hover then
-		back_color = box2rect[hovered_box]["color"] - 1
-		next_color = box2rect[hovered_box]["color"] + 1
-
-		font = love.graphics.newFont(brushaff, 50)
-		love.graphics.setFont(font)
-
-		if back_color <= 0 then
-			back_color = 3
-		end
-		if next_color >= 4 then
-			next_color = 1
-		end
-
-		love.graphics.print("<L "..color_names[back_color].."\t"..color_names[next_color].." R>", 800, 50)
+    	h_rect = box2rect[hovered_box]
+		love.graphics.draw(board_pieces[h_rect["color"]], h_rect["x"] * RECT_OFFSET * piece_size * piece_scale - left_most_rect["x"] * RECT_OFFSET * piece_scale * piece_size - camera[1], h_rect["y"] * RECT_OFFSET * piece_size * piece_scale - bottom_most_rect["y"] * RECT_OFFSET * piece_scale * piece_size + WINDOW_TOP_AREA_HEIGHT - camera[2], 0, piece_scale * 1.25, piece_scale * 1.25)
 	end
+
+	biome = GetBiome(camera[1], camera[2])
 
     hovered_box = nil
     clicked_box = nil
@@ -376,6 +367,14 @@ function love.draw(dt)
 	love.graphics.setFont(font)
 	
 	love.graphics.print("Balance Our Planet!", 10, 15)
+
+	prompt = ""
+	if player_turn then
+		prompt = "Your turn"
+		else
+		prompt = "Their turn"
+		end	
+	love.graphics.print(prompt, 800, 15)
 
 	love.graphics.print("Score: " .. Player_Score, 100, 150)
 
@@ -410,8 +409,6 @@ function _HandleNewColor(rect)
 	else
 		multiplier = 0
 	end
-
-
 end
 
 function Computer_Change()
@@ -420,9 +417,11 @@ function Computer_Change()
 	math.randomseed(love.timer.getTime())
 	math.random()
 	math.random()
-	math.random()
-	math.random()
 	node_to_change = arr_hitboxes[math.random(MAX_RECTS)]
+
+	while box2rect[node_to_change]["color"] == 4 do
+		node_to_change = arr_hitboxes[math.random(MAX_RECTS)]
+	end
 
 	cur_pick = node_to_change
 
@@ -446,9 +445,24 @@ function Computer_Change()
 	box2rect[node_to_change]["color"] = tempColor
 
 	first_computer_action = false
-	computer_action_interval = 5.0
+	computer_action_interval = 3.0
 	prompt_timer = 3.0
 	computer_acted = true
+
+	similarities = 0
+	rect = box2rect[node_to_change]
+	for i, N in ipairs(rect["neighbors"]) do
+		if N["color"] == rect["color"] or N["color"] == 4 then
+			similarities = similarities + 1
+		end
+	end
+
+	if similarities >= table.getn(rect["neighbors"]) then
+		box2rect[node_to_change]["color"] = 4
+	end
+
+	player_turn = true
+	comp_click:play()
 end
 
 function _ChangeColor()
@@ -497,4 +511,8 @@ function _ChangeColor()
 
 		table.insert(rectangles_that_have_changed, box2rect[clicked_box])
 		delay_timer = 1.0
+		computer_think_time = 0
+		player_turn = false
+
+		player_click:play()
 end
