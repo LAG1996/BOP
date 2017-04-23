@@ -12,8 +12,9 @@ player_click = love.audio.newSource("sounds/doorhclick.wav")
 player_click:setVolume(2.0)
 comp_click = love.audio.newSource("sounds/doorhclick.wav")
 comp_click:setPitch(0.5)
+comp_click:setVolume(2.0)
 
-color_names = {"red", "green", "yellow"}
+color_names = {"Red", "Green", "Yellow"}
 
 brushaff = "fonts/Brushaff.ttf"
 
@@ -81,8 +82,8 @@ difficultyIncreaseMessage = "The humans need to stop destroying EARTH.          
 changeColorCount = 0
 difficultyIncreaseButtons = {"OK", "No!", "Help", escapebutton = 2}
 
-table_dimensions_x = 20
-table_dimensions_y = 20
+table_dimensions_x = 15
+table_dimensions_y = 15
 
 biomes = {"industry", "woodland", "ocean", "atmosphere"}
 
@@ -297,12 +298,10 @@ function love.update(dt)
 				if love.mouse.isDown(1) or love.mouse.isDown(3) then
 					there_are_collisions = true
 					clicked_box = shape
-				else
+				end
 					hover = true
 					hovered_box = shape
-				break
-			end
-
+					break
 	end
 
 	if love.keyboard.isDown("escape") then
@@ -310,7 +309,7 @@ function love.update(dt)
 	end
 
 	--check for keyboard presses to move around the map
-	if love.keyboard.isDown("w") and camera[2] - 1 * camera_speed * dt > WINDOW_TOP_AREA_HEIGHT then
+	if love.keyboard.isDown("w") and camera[2] - 1 * camera_speed * dt > -50 then
 		camera[2] = camera[2] - 1 * camera_speed * dt
 	end
 
@@ -344,7 +343,7 @@ function love.update(dt)
 end
 
 function love.draw(dt)
-	if there_are_collisions and delay_timer == 0 and box2rect[clicked_box]["color"] ~= 4 and player_turn then
+	if there_are_collisions and delay_timer == 0 and box2rect[hovered_box]["color"] ~= 4 and player_turn then
 		_ChangeColor()
 	end
 
@@ -355,9 +354,21 @@ function love.draw(dt)
 
     if hover then
     	h_rect = box2rect[hovered_box]
-		love.graphics.draw(board_pieces[h_rect["color"]], h_rect["x"] * RECT_OFFSET * piece_size * piece_scale - left_most_rect["x"] * RECT_OFFSET * piece_scale * piece_size - camera[1], h_rect["y"] * RECT_OFFSET * piece_size * piece_scale - bottom_most_rect["y"] * RECT_OFFSET * piece_scale * piece_size + WINDOW_TOP_AREA_HEIGHT - camera[2], 0, piece_scale * 1.25, piece_scale * 1.25)
-	end
+    	next_c_index = h_rect["color"] + 1
 
+		if next_c_index > 3 then
+			next_c_index = 1
+		end    	
+		love.graphics.draw(board_pieces[h_rect["color"]], h_rect["x"] * RECT_OFFSET * piece_size * piece_scale - left_most_rect["x"] * RECT_OFFSET * piece_scale * piece_size - camera[1], h_rect["y"] * RECT_OFFSET * piece_size * piece_scale - bottom_most_rect["y"] * RECT_OFFSET * piece_scale * piece_size + WINDOW_TOP_AREA_HEIGHT - camera[2], 0, piece_scale * 1.25, piece_scale * 1.25)
+
+    	love.graphics.setColor(0.0, 0.0, 0.0, 255)
+    	if h_rect["color"] == 4 then
+    		love.graphics.print("Damaged", h_rect["x"] * RECT_OFFSET * piece_size * piece_scale - left_most_rect["x"] * RECT_OFFSET * piece_scale * piece_size - camera[1] + h_rect["width"]/2, h_rect["y"] * RECT_OFFSET * piece_size * piece_scale - bottom_most_rect["y"] * RECT_OFFSET * piece_scale * piece_size + WINDOW_TOP_AREA_HEIGHT - camera[2])
+    	else
+    		love.graphics.print("<=Change to: " .. color_names[next_c_index], h_rect["x"] * RECT_OFFSET * piece_size * piece_scale - left_most_rect["x"] * RECT_OFFSET * piece_scale * piece_size - camera[1] + h_rect["width"]/2, h_rect["y"] * RECT_OFFSET * piece_size * piece_scale - bottom_most_rect["y"] * RECT_OFFSET * piece_scale * piece_size + WINDOW_TOP_AREA_HEIGHT - camera[2])
+    	end	
+	end
+love.graphics.setColor(255, 255, 255, 255)
 	biome = GetBiome(camera[1], camera[2])
 
     hovered_box = nil
@@ -380,14 +391,14 @@ function love.draw(dt)
 
 	font = love.graphics.newFont(brushaff, 30)
 	love.graphics.setFont(font)
-	love.graphics.print("x" .. multiplier, 100, 250)
+	love.graphics.print("x" .. math.pow(2, multiplier), 100, 250)
 
 end
 
 function _HandleNewColor(rect)
 	is_different = 0
 	for i, Neighbor in ipairs(rect["neighbors"]) do
-		if Neighbor["color"] == rect["color"] then
+		if Neighbor["color"] == rect["color"] or Neighbor["color"] == 4 then
 			score_multiplier_counter = 1
 		else
 			Player_Score = Player_Score + 10 * math.pow(2, multiplier)
@@ -459,6 +470,7 @@ function Computer_Change()
 
 	if similarities >= table.getn(rect["neighbors"]) then
 		box2rect[node_to_change]["color"] = 4
+		multiplier = 1
 	end
 
 	player_turn = true
