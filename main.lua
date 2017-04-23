@@ -30,7 +30,7 @@ bottom_most_rect = {}
 first_rectangle = {}
 first_hitbox = {}
 
-mouse = Hardon.circle(400, 300, 20)
+mouse = Hardon.circle(400, 300, 10)
 mouse:moveTo(love.mouse.getPosition())
 
 there_are_collisions = false
@@ -169,4 +169,7 @@ function love.draw(dt)
     	love.graphics.setColor(color[v["color"]][1], color[v["color"]][2], color[v["color"]][3])
     	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] + OFFSET_Y, v["width"], v["height"], 20, 20)
     end
+
+    love.graphics.setColor(0,0,0)
+    mouse:draw('fill')
 end
