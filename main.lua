@@ -33,6 +33,7 @@ mouseYPosition = nil
 lastRecordedRectColor = {} --A table for recording the last known color of a box. Probably useless as well.
 
 box2rect = {} --A table for mapping hitboxes to their parent boxes
+rect2box = {}
 
 pos2rect = {} --A table for mapping positions to their parent boxes
 
@@ -80,8 +81,8 @@ table_dimensions_y = 25
 
 biomes = {"industry", "woodland", "ocean", "atmosphere"}
 
-biomesToTiles = {}
 listOfInfluence = {}
+alreadyTookOver = {}
 
 MAX_RECTS = math.floor(table_dimensions_x * table_dimensions_y * .40)
 
@@ -91,25 +92,31 @@ piece_size = 1024
 camera = {0, 0}
 camera_speed = 250
 
+first_computer_action = true
+computer_action_interval = 15.0
+computer_acted = false
+prompt_timer = 5.0
+cur_pick = nil
+
+seed = 123213213232
+math.randomseed(os.time())
+
 function love.load()
 	my_color = 1
 	love.graphics.setBackgroundColor(50, 50, 50)
 	love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT, {fullscreen = true})
 
 	--create a random seed
-	math.randomseed(os.time())
 	--initialize all the rectangles and their hitboxes
 	first_rectangle = {}
 	first_rectangle["x"] = math.random(table_dimensions_x)
 	first_rectangle["y"] = math.random(table_dimensions_y)
 	first_rectangle["width"] = RECT_SIDE
 	first_rectangle["height"] = RECT_SIDE
-	math.randomseed(os.time())
 	first_rectangle["color"] = my_color
 	first_rectangle["neighbors"] = {}
 
 	my_color = my_color + 1
-
 
 	open_adjacent_spots = {{first_rectangle["x"] + 1, first_rectangle["y"]}, {first_rectangle["x"] - 1, first_rectangle["y"]}, {first_rectangle["x"], first_rectangle["y"] + 1}, {first_rectangle["x"], first_rectangle["y"] - 1}}
 
@@ -141,7 +148,6 @@ function love.load()
 	i = 2
 	while i <= MAX_RECTS do
 		--create a random seed
-		math.randomseed(os.time())
 		open_index = math.random(table.getn(open_adjacent_spots))
 
 
@@ -153,7 +159,6 @@ function love.load()
 			new_rectangle["y"] = open_adjacent_spots[open_index][2]
 			new_rectangle["width"] = piece_size * piece_scale
 			new_rectangle["height"] = piece_size * piece_scale
-			math.randomseed(os.time())
 			new_rectangle["color"] = my_color
 
 			--Set adjacent neighbors
@@ -237,56 +242,35 @@ end
 	for i, rect in ipairs(arr_rectangles) do
 		new_hitbox = Hardon.rectangle(rect["x"] * piece_size * piece_scale - left_most_rect["x"] * piece_scale * piece_size, rect["y"] * piece_size * piece_scale - bottom_most_rect["y"] * piece_scale * piece_size + WINDOW_TOP_AREA_HEIGHT, rect["width"], rect["height"])
 		box2rect[new_hitbox] = rect
+		rect2box[rect] = new_hitbox
 		lastRecordedRectColor[rect] = rect["color"]
+		alreadyTookOver[rect["x"]..","..rect["y"]] = false
+		table.insert(arr_hitboxes, new_hitbox)
 	end
 
-		_Build_Biomes() --Big one
+	table.insert(listOfInfluence, left_bottom_most_rect)
 end
 
-function _Build_Biomes()
-	--Build biomes that grow from each corner
-	corners = {{1, 1}, {table_dimensions_x, 1}, {table_dimensions_x, table_dimensions_y}, {1, table_dimensions_y}} --List of corners
-	i = 1
-	while i <= 4 do
-		bi_name = biomes[i]
-		--Randomly choose a corner
-		math.randomseed(os.time())
-		corner_index = math.random(table.getn(corners))
-		starting_point = {}
-		biome_list = {}
-		queue = {}
-
-		if corner_index == 1 then
-			starting_point = left_bottom_most_rect
-		elseif corner_index == 2 then
-			starting_point = right_bottom_most_rect
-		elseif corner_index == 3 then
-			starting_point = right_top_most_rect
-		else
-			starting_pont = left_top_most_rect
-		end
-
-		starting_point["visited"] = true
-		table.insert(biome_list, starting_point)
-		table.insert(queue, starting_point)
-
-		--Greedy grow from this graph and pick nodes until the allowed amount of nodes is taken
-		while table.getn(biome_list) < MAX_RECTS / 4 or table.getn(queue) > 0 do
-			place = table.remove(queue)
-			for i, N in ipairs(starting_point["neighbors"]) do
-				if N["visited"] = true then
-					N["visited"] = true
-					table.insert(biome_list, N)
-					table.insert(queue, N)
-				end
-			end
-		end
-		table.remove(corners, corner_index)
-		biomesToTiles[bi_name] = biome_list
-		i= i + 1
+--Given an X and Y, tell me the biome I'm in
+function GetBiome(x, y)
+	
+	if x <= table_dimensions_x / 2 and y >= table_dimensions_y / 2 then
+		return "Industry"
 	end
 
-	listOfInfluence = bionesToTiles[industry][math.random(table.getn(biomesToTiles["industry"]))]
+	if x > table_dimensions_x / 2 and y > table_dimensions_y / 2 then
+		return "Forest"
+	end
+
+	if x <= table_dimensions_x / 2 and y <= table_dimensions_y /2 then
+		return "Sky"
+	end
+
+	if x > table_dimensions_x / 2 and y < table_dimensions_y/2 then
+		return "Ocean"
+	end
+
+	return "NA"
 end
 
 function love.update(dt)
@@ -341,6 +325,21 @@ function love.update(dt)
 	if delay_timer >= 1.0 then
 		delay_timer = delay_timer + 1
 	end
+
+	computer_action_interval = computer_action_interval - dt
+
+	if prompt_timer > 0 then
+		prompt_timer = prompt_timer - dt
+	else
+		computer_acted = false
+	end
+
+--[[
+	if computer_action_interval <= 0 then
+		Computer_Change()
+	end
+]]--
+	Computer_Change()
 end
 
 function love.draw(dt)
@@ -417,6 +416,39 @@ end
 
 function Computer_Change()
 
+	node_to_change = {}
+	math.randomseed(love.timer.getTime())
+	math.random()
+	math.random()
+	math.random()
+	math.random()
+	node_to_change = arr_hitboxes[math.random(MAX_RECTS)]
+
+		cur_pick = node_to_change
+
+	tempColor = box2rect[node_to_change]["color"]
+	sign = 0
+
+	if math.random(2) == 1 then
+		sign = -1
+	else
+		sign = 1
+	end
+
+	if tempColor + sign < 1 then
+		tempColor = 3
+		elseif tempColor + sign > 3 then
+			tempColor = 1
+		else
+			tempColor = tempColor + sign
+	end
+
+	box2rect[node_to_change]["color"] = tempColor
+
+	first_computer_action = false
+	computer_action_interval = 5.0
+	prompt_timer = 3.0
+	computer_acted = true
 end
 
 function _ChangeColor()
