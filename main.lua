@@ -10,6 +10,10 @@ color[1] = {0, 0, 255}
 color[2] = {255, 0, 0}
 color[3] = {0, 255, 0}
 
+-- Saving the shape and delta values in a global variable
+mouseXPosition = nil
+mouseYPosition = nil
+
 box2rect = {}
 
 MAX_RECTS = 49
@@ -145,6 +149,7 @@ function love.update(dt)
 	there_are_collisions = false
 	if love.mouse.isDown(1) then
 		for shape, delta in pairs(Hardon.collisions(mouse)) do
+			mouseXPosition,mouseYPosition = love.mouse.getPosition()
 			there_are_collisions = true
 			break
 		end
@@ -161,6 +166,8 @@ function love.draw(dt)
 	end
 
 	if(there_are_collisions) then
+		--love.graphics.print(table.getn(mouseXPosition)..table.getn(mouseYPosition)..mouseYPosition[1])
+		love.graphics.print(type(mouseXPosition)..type(mouseYPosition)..mouseXPosition..mouseYPosition)
 		love.graphics.print("THERE ARE COLLISIONS YA BITCH!!!!!!", 10, 10)
 	end
 	
