@@ -17,13 +17,11 @@ color[1] = {0, 0, 255}
 color[2] = {255, 0, 0}
 color[3] = {0, 255, 0}
 
-<<<<<<< HEAD
 -- Saving the shape and delta values in a global variable
 mouseXPosition = nil
 mouseYPosition = nil
-=======
+
 lastRecordedRectColor = {}
->>>>>>> origin/master
 
 box2rect = {}
 
@@ -214,7 +212,6 @@ function love.draw(dt)
 		OFFSET_Y = OFFSET_Y * -1 
 	end
 
-<<<<<<< HEAD
 	if(there_are_collisions) then
 		--love.graphics.print(table.getn(mouseXPosition)..table.getn(mouseYPosition)..mouseYPosition[1])
 		love.graphics.print(box2rect[clicked_box]["x"] - OFFSET_X ..","..box2rect[clicked_box]["y"] + OFFSET_Y..","..box2rect[clicked_box]["color"].."\n", 10, 10)
@@ -229,9 +226,6 @@ function love.draw(dt)
 		--love.graphics.print("THERE ARE COLLISIONS YA BITCH!!!!!!", 10, 10)
 	end
 	
-=======
-
->>>>>>> origin/master
     for i, v in ipairs(arr_rectangles) do
     	love.graphics.setColor(color[v["color"]][1], color[v["color"]][2], color[v["color"]][3])
     	love.graphics.rectangle("fill", v["x"] - OFFSET_X, v["y"] + OFFSET_Y, v["width"], v["height"], 20, 20)
@@ -245,19 +239,17 @@ function _HandleNewColor(rect_1, rect_2)
 	if rect_1["color"] == rect_2["color"] then
 		--Lower the score multiplier
 		--Unless...
-
 	else
 		for i, N in ipairs(rect_1["color"]) do
 			if N["x"] ~= rect_2["x"] or N["y"] ~= rect_2["y"] then
 				if rect_1 ~= N["color"] then
 					--Increment the score multiplier to reward a
 					--chain of three non-similar nodes
-			end
-
+				end
 			lastRecordedRectColor[N] = N["color"] --Update the last recorded color for this node			
+			end
 		end
+		lastRecordedRectColor[rect_1] = rect_1["color"] --Update this rectangle's last recorded color
+		lastRecordedRectColor[rect_2] = rect_2["color"] --Update this rectangle's last recorded color
 	end
-
-	lastRecordedRectColor[rect_1] = rect_1["color"] --Update this rectangle's last recorded color
-	lastRecordedRectColor[rect_2] = rect_2["color"] --Update this rectangle's last recorded color
 end
