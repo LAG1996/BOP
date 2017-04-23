@@ -228,23 +228,23 @@ end
 function _ChangeColor()
 	love.graphics.print(box2rect[clicked_box]["x"] - OFFSET_X ..","..box2rect[clicked_box]["y"] + OFFSET_Y..","..box2rect[clicked_box]["color"].."\n", 10, 10)
 		if love.mouse.isDown(1) then
-			love.graphics.print("Right Click");
+			love.graphics.print("Left Click");
 			tempColor = box2rect[clicked_box]["color"] + 1;
 		end
 		if love.mouse.isDown(2) then
-			love.graphics.print("Left Click");
+			love.graphics.print("Right Click");
 			tempColor = box2rect[clicked_box]["color"] - 1;
 		end
 
 		if(tempColor == 4 ) then
 			tempColor=1;
-			else if (tempColor == 0) then
-				tempColor = 3;
-			end
+		end
+		if (tempColor == 0) then
+			tempColor = 3;
 		end
 		box2rect[clicked_box]["color"] = tempColor;
-		love.graphics.setColor(color[box2rect[clicked_box]["color"]][1], color[box2rect[clicked_box]["color"]][2], color[box2rect[clicked_box]["color"]][3])
-    	love.graphics.rectangle("fill", box2rect[clicked_box]["x"] - OFFSET_X, box2rect[clicked_box]["y"] + OFFSET_Y, box2rect[clicked_box]["width"], box2rect[clicked_box]["height"], 20, 20)
+		--love.graphics.setColor(color[box2rect[clicked_box]["color"]][1], color[box2rect[clicked_box]["color"]][2], color[box2rect[clicked_box]["color"]][3])
+    	--love.graphics.rectangle("fill", box2rect[clicked_box]["x"] - OFFSET_X, box2rect[clicked_box]["y"] + OFFSET_Y, box2rect[clicked_box]["width"], box2rect[clicked_box]["height"], 20, 20)
     	_ForceWait(1);
 end
 
