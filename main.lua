@@ -50,6 +50,11 @@ there_are_collisions = false
 
 clicked_box = nil
 
+difficultyIncreaseTitle = "Save EARTH!!!"
+difficultyIncreaseMessage = "The humans need to stop destroying EARTH.                       The difficulty will now Increase "
+changeColorCount = 0
+difficultyIncreaseButtons = {"OK", "No!", "Help", escapebutton = 2}
+
 function love.load()
 	my_color = 1
 	love.graphics.setBackgroundColor(50, 50, 50)
@@ -226,26 +231,40 @@ function love.draw(dt)
 end
 
 function _ChangeColor()
+	changeColorCount = changeColorCount + 1;
 	love.graphics.print(box2rect[clicked_box]["x"] - OFFSET_X ..","..box2rect[clicked_box]["y"] + OFFSET_Y..","..box2rect[clicked_box]["color"].."\n", 10, 10)
-		if love.mouse.isDown(1) then
-			love.graphics.print("Left Click");
-			tempColor = box2rect[clicked_box]["color"] + 1;
-		end
-		if love.mouse.isDown(2) then
-			love.graphics.print("Right Click");
-			tempColor = box2rect[clicked_box]["color"] - 1;
-		end
+	if love.mouse.isDown(1) then
+		love.graphics.print("Left Click");
+		tempColor = box2rect[clicked_box]["color"] + 1;
+	end
+	if love.mouse.isDown(3) then
+		love.graphics.print("Right Click");
+		tempColor = box2rect[clicked_box]["color"] - 1;
+	end
+	if(tempColor == 4 ) then
+		tempColor=1;
+	end
+	if (tempColor == 0) then
+		tempColor = 3;
+	end
+	box2rect[clicked_box]["color"] = tempColor;
+	--love.graphics.setColor(color[box2rect[clicked_box]["color"]][1], color[box2rect[clicked_box]["color"]][2], color[box2rect[clicked_box]["color"]][3])
+   	--love.graphics.rectangle("fill", box2rect[clicked_box]["x"] - OFFSET_X, box2rect[clicked_box]["y"] + OFFSET_Y, box2rect[clicked_box]["width"], box2rect[clicked_box]["height"], 20, 20)
+   	_ForceWait(1);
 
-		if(tempColor == 4 ) then
-			tempColor=1;
+   	if(changeColorCount==20) then
+   		changeColorCount = 0
+   		difficultyIncreaseButtonPressed = love.window.showMessageBox(difficultyIncreaseTitle, difficultyIncreaseMessage, difficultyIncreaseButtons)
+   		if(difficultyIncreaseButtonPressed==1) then
+			MAX_RECTS = 70
+			love.load()
+		elseif (difficultyIncreaseButtonPressed==2) then
+			-- No
+		elseif (difficultyIncreaseButtonPressed==3) then
+			-- Help
 		end
-		if (tempColor == 0) then
-			tempColor = 3;
-		end
-		box2rect[clicked_box]["color"] = tempColor;
-		--love.graphics.setColor(color[box2rect[clicked_box]["color"]][1], color[box2rect[clicked_box]["color"]][2], color[box2rect[clicked_box]["color"]][3])
-    	--love.graphics.rectangle("fill", box2rect[clicked_box]["x"] - OFFSET_X, box2rect[clicked_box]["y"] + OFFSET_Y, box2rect[clicked_box]["width"], box2rect[clicked_box]["height"], 20, 20)
-    	_ForceWait(1);
+   	end
+
 end
 
 function _HandleNewColor(rect_1, rect_2)
